@@ -36,6 +36,21 @@ def pseudo_forward_2():
     raise NotImplementedError
 
 
+def clean_headers(headers):
+    '''
+    1. Remove headers added by request_flask_adapter (used only for testing)
+    2. Lowercase header names, we are case insensitive
+    '''
+    out = dict(headers)
+    if out.get('User-Agent', '') == 'RequestsFlask/0.0.1':
+        del out['User-Agent']
+    if out.get('Host', '') == 'localhost':
+        del out['Host']
+
+    out = {key.lower(): val for key, val in out.items()}
+    return out
+
+
 @pytest.mark.parametrize('forward_func', [pseudo_forward_1])
 @pytest.mark.parametrize('src_req', sample_requests)
 def test_request(forward_func, session, src_req):
@@ -48,5 +63,5 @@ def test_request(forward_func, session, src_req):
     out_prepped = out_req.prepare()
     assert prepped.method == out_prepped.method
     assert prepped.url == out_prepped.url
-    assert prepped.headers == out_prepped.headers
+    assert clean_headers(prepped.headers) == clean_headers(out_prepped.headers)
     assert prepped.body == out_prepped.body

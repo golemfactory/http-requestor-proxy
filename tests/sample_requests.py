@@ -30,7 +30,6 @@ sample_requests = [
 
     Request('post', BASE_URL, json={'x': ['y', 'z', {'a': 7}]}),
 
-
     Request('post', BASE_URL, cookies={'aa': 'bb'}),
 
     Request('post', BASE_URL, auth=('aa', 'zz')),

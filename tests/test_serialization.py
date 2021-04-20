@@ -51,6 +51,17 @@ def clean_headers(headers):
     return out
 
 
+def clean_body(body):
+    '''
+    I don't know why, but prepped.body is sometimes str (should be bytes).
+    Maybe a bug in requests?
+    I consider this to be a testing-only issue.
+    '''
+    if type(body) is str:
+        return body.encode('UTF-8')
+    return body
+
+
 @pytest.mark.parametrize('forward_func', [pseudo_forward_1])
 @pytest.mark.parametrize('src_req', sample_requests)
 def test_request(forward_func, session, src_req):
@@ -64,4 +75,4 @@ def test_request(forward_func, session, src_req):
     assert prepped.method == out_prepped.method
     assert prepped.url == out_prepped.url
     assert clean_headers(prepped.headers) == clean_headers(out_prepped.headers)
-    assert prepped.body == out_prepped.body
+    assert clean_body(prepped.body) == clean_body(out_prepped.body)

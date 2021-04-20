@@ -11,13 +11,13 @@ class Request():
     @classmethod
     def from_flask_request(cls):
         from flask import request
-        return cls(request.method, request.url, request.data, dict(request.headers))
+        return cls(request.method, request.url, request.get_data(), dict(request.headers))
 
     def as_requests_request(self):
         req = requests.Request(
             method=self.method,
             url=self.url,
+            data=self.data,
             headers=self.headers,
-            data=self.data
         )
         return req

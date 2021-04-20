@@ -40,12 +40,12 @@ def pseudo_forward_2():
 @pytest.mark.parametrize('src_req', sample_requests)
 def test_request(forward_func, session, src_req):
     catchall_server.forward_request = forward_func
-    prepped = session.prepare_request(src_req)
+    prepped = src_req.prepare()
 
     res = session.send(prepped)
     assert res.status_code == 200
 
-    out_prepped = session.prepare_request(out_req)
+    out_prepped = out_req.prepare()
     assert prepped.method == out_prepped.method
     assert prepped.url == out_prepped.url
     assert prepped.headers == out_prepped.headers

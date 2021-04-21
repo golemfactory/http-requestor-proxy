@@ -12,30 +12,33 @@ import os
 Session.register(BASE_URL, catchall_server.app)
 
 
-def request_flask_adapter_forward():
-    ECHO_URL = 'http://echo/'
-    Session.register(ECHO_URL, echo_server.app)
-    req = Request.from_flask_request()
-    req.url = req.url.replace(BASE_URL, ECHO_URL)
-    echo_res = Session().send(req.as_requests_request().prepare())
-    return echo_res.content, echo_res.status_code, echo_res.headers.items()
+def requests_flask_adapter_url():
+    echo_url = 'http://echo/'
+    Session.register(echo_url, echo_server.app)
+    return echo_url
 
 
-def forward_to_url():
+def external_url():
     echo_url = os.environ.get('ECHO_SERVER_URL')
     if not echo_url:
         pytest.skip("ECHO_SERVER_URL is not set")
-
-    req = Request.from_flask_request()
-    req.url = req.url.replace(BASE_URL, echo_url)
-    echo_res = Session().send(req.as_requests_request().prepare())
-    return echo_res.content, echo_res.status_code, echo_res.headers.items()
+    return echo_url
 
 
-@pytest.mark.parametrize('forward_func', [request_flask_adapter_forward, forward_to_url])
+def create_forward_func(echo_url):
+    def forward():
+        req = Request.from_flask_request()
+        req.replace_mount_url(BASE_URL, echo_url)
+        echo_res = Session().send(req.as_requests_request().prepare())
+        return echo_res.content, echo_res.status_code, echo_res.headers.items()
+    return forward
+
+
+@pytest.mark.parametrize('get_url', [requests_flask_adapter_url, external_url])
 @pytest.mark.parametrize('src_req', sample_requests)
-def test_echo_server(forward_func, src_req):
-    catchall_server.forward_request = forward_func
+def test_echo_server(get_url, src_req):
+    url = get_url()
+    catchall_server.forward_request = create_forward_func(url)
     prepped = src_req.prepare()
 
     res = Session().send(prepped)

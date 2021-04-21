@@ -9,6 +9,11 @@ class Request():
         self.data = data
         self.headers = headers
 
+    def replace_mount_url(self, old, new):
+        if not self.url.startswith(old):
+            raise ValueError(f"current url doesn't start with {old}")
+        self.url = self.url.replace(old, new, 1)
+
     @classmethod
     def from_flask_request(cls):
         from flask import request

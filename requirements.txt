@@ -1,0 +1,4 @@
+Flask
+requests
+pytest
+requests_flask_adapter

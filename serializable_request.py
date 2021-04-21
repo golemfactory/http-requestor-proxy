@@ -34,13 +34,15 @@ class Request():
             f.write(self.as_json())
 
     def as_json(self):
-        data = {
+        return json.dumps(self.as_dict())
+
+    def as_dict(self):
+        return {
             'method': self.method,
             'url': self.url,
             'data': self.data.decode('utf-8'),
             'headers': self.headers,
         }
-        return json.dumps(data)
 
     def as_requests_request(self):
         req = requests.Request(

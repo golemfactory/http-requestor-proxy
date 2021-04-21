@@ -7,20 +7,32 @@ from serializable_request import Request
 from requests_flask_adapter import Session
 import catchall_server
 import echo_server
+import os
 
-ECHO_URL = 'http://echo/'
 Session.register(BASE_URL, catchall_server.app)
-Session.register(ECHO_URL, echo_server.app)
 
 
 def request_flask_adapter_forward():
+    ECHO_URL = 'http://echo/'
+    Session.register(ECHO_URL, echo_server.app)
     req = Request.from_flask_request()
     req.url = req.url.replace(BASE_URL, ECHO_URL)
     echo_res = Session().send(req.as_requests_request().prepare())
     return echo_res.content, echo_res.status_code, echo_res.headers.items()
 
 
-@pytest.mark.parametrize('forward_func', [request_flask_adapter_forward])
+def forward_to_url():
+    echo_url = os.environ.get('ECHO_SERVER_URL')
+    if not echo_url:
+        pytest.skip("ECHO_SERVER_URL is not set")
+
+    req = Request.from_flask_request()
+    req.url = req.url.replace(BASE_URL, echo_url)
+    echo_res = Session().send(req.as_requests_request().prepare())
+    return echo_res.content, echo_res.status_code, echo_res.headers.items()
+
+
+@pytest.mark.parametrize('forward_func', [request_flask_adapter_forward, forward_to_url])
 @pytest.mark.parametrize('src_req', sample_requests)
 def test_echo_server(forward_func, src_req):
     catchall_server.forward_request = forward_func

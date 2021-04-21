@@ -2,17 +2,16 @@ from .sample_requests import sample_requests, BASE_URL
 from .helpers import clean_headers, clean_body
 
 import pytest
-
 from requests_flask_adapter import Session
-import catchall_server
-from pytest import fixture
-from engine import Request
 from tempfile import NamedTemporaryFile
+
+import catchall_server
+from serializable_request import Request
 
 out_req = None
 
 
-@fixture
+@pytest.fixture
 def session():
     Session.register(BASE_URL, catchall_server.app)
     return Session()
@@ -56,8 +55,11 @@ def test_serialization(forward_func, session, src_req):
     prepped = src_req.prepare()
 
     res = session.send(prepped)
+
+    #   Fail --> traceback in serialization
     assert res.status_code == 200
 
+    #   Fail --> incorrect serialization
     out_prepped = out_req.prepare()
     assert prepped.method == out_prepped.method
     assert prepped.url == out_prepped.url

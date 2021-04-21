@@ -1,4 +1,4 @@
-Flask
-requests
-pytest
-requests_flask_adapter
+Flask==1.1.2
+requests==2.25.1
+pytest==6.2.3
+requests_flask_adapter==0.1.0

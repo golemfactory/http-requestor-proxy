@@ -1,4 +1,5 @@
 from .sample_requests import sample_requests, BASE_URL
+from .helpers import clean_headers, clean_body
 
 import pytest
 
@@ -6,6 +7,7 @@ from requests_flask_adapter import Session
 import catchall_server
 from pytest import fixture
 from engine import Request
+from tempfile import NamedTemporaryFile
 
 out_req = None
 
@@ -16,55 +18,40 @@ def session():
     return Session()
 
 
-def pseudo_forward_1():
+def pseudo_forward():
     '''
-    Send request.
-    Recreate request from flask internal context.
+    Send request to flask.
+    Recreate request using flask internal request context.
+
+    This tests if we use flask.request correctly.
     '''
     global out_req
     out_req = Request.from_flask_request().as_requests_request()
     return {}, 200
 
 
-def pseudo_forward_2():
+def pseudo_forward_with_file():
     '''
     Send request.
-    Recreate request from flask internal context.
+    Recreate request from flask internal request context.
     Save request to file.
-    Read request from the file.
+    Read request from this file.
+
+    Assuming pseudo_forward finds no errors, this tests if we correctly
+    serialize/deserialize the request.
     '''
-    raise NotImplementedError
+    global out_req
+    req = Request.from_flask_request()
+
+    with NamedTemporaryFile() as f:
+        req.to_file(f.name)
+        out_req = Request.from_file(f.name).as_requests_request()
+    return {}, 200
 
 
-def clean_headers(headers):
-    '''
-    1. Remove headers added by request_flask_adapter (used only for testing)
-    2. Lowercase header names, we are case insensitive
-    '''
-    out = dict(headers)
-    if out.get('User-Agent', '') == 'RequestsFlask/0.0.1':
-        del out['User-Agent']
-    if out.get('Host', '') == 'localhost':
-        del out['Host']
-
-    out = {key.lower(): val for key, val in out.items()}
-    return out
-
-
-def clean_body(body):
-    '''
-    I don't know why, but prepped.body is sometimes str (should be bytes).
-    Maybe a bug in requests?
-    I consider this to be a testing-only issue.
-    '''
-    if type(body) is str:
-        return body.encode('UTF-8')
-    return body
-
-
-@pytest.mark.parametrize('forward_func', [pseudo_forward_1])
+@pytest.mark.parametrize('forward_func', [pseudo_forward, pseudo_forward_with_file])
 @pytest.mark.parametrize('src_req', sample_requests)
-def test_request(forward_func, session, src_req):
+def test_serialization(forward_func, session, src_req):
     catchall_server.forward_request = forward_func
     prepped = src_req.prepare()
 

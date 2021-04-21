@@ -2,6 +2,8 @@ def clean_headers(headers):
     '''
     1. Remove headers added by request_flask_adapter (used only for testing)
     2. Lowercase http header names, we are case insensitive
+    3. Remove 'accept-encoding': 'identity' header, added by http.client (deep inside requests)
+       https://stackoverflow.com/a/18706328
     '''
     out = dict(headers)
     if out.get('User-Agent', '') == 'RequestsFlask/0.0.1':
@@ -10,6 +12,10 @@ def clean_headers(headers):
         del out['Host']
 
     out = {key.lower(): val for key, val in out.items()}
+
+    if out.get('accept-encoding', '') == 'identity':
+        del out['accept-encoding']
+
     return out
 
 

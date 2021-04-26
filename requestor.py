@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
 from asgiref.sync import async_to_sync
-import pathlib
 
 from yapapi import (
     Executor,
@@ -14,42 +13,19 @@ from yapapi.package import vm
 
 async def main(subnet_tag='devnet-beta.1'):
     package = await vm.repo(
-        image_hash="9a3b5d67b0b27746283cb5f287c13eab1beaa12d92a9f536b747c7ae",
+        image_hash="9fb57c1d1934d841da006aefbca5ee5cc89b8aac4865b3d6a76437d3",
         min_mem_gib=0.5,
         min_storage_gib=2.0,
     )
 
     async def worker(ctx: WorkContext, tasks):
-        script_dir = pathlib.Path(__file__).resolve().parent
-        scene_path = str(script_dir / "cubes.blend")
-        ctx.send_file(scene_path, "/golem/resource/scene.blend")
         async for task in tasks:
-            frame = task.data
-            crops = [{"outfilebasename": "out", "borders_x": [0.0, 1.0], "borders_y": [0.0, 1.0]}]
-            ctx.send_json(
-                "/golem/work/params.json",
-                {
-                    "scene_file": "/golem/resource/scene.blend",
-                    "resolution": (400, 300),
-                    "use_compositing": False,
-                    "crops": crops,
-                    "samples": 100,
-                    "frames": [frame],
-                    "output_format": "PNG",
-                    "RESOURCES_DIR": "/golem/resources",
-                    "WORK_DIR": "/golem/work",
-                    "OUTPUT_DIR": "/golem/output",
-                },
-            )
             for i in range(2):
-                ctx.run("/golem/entrypoints/run-blender.sh")
-                output_file = f"output_{frame}_{i}.png"
-                ctx.download_file(f"/golem/output/out{frame:04d}.png", output_file)
-                yield ctx.commit(timeout=timedelta(seconds=120))
-            task.accept_result(result=output_file)
-
-    # Iterator over the frame indices that we want to render
-    frames: range = [0, 10]
+                their_file, our_file = "/golem/output/ttt.txt", f"output_{i}.txt"
+                ctx.run("/golem/entrypoints/run-sample_run.sh")
+                ctx.download_file(their_file, our_file)
+                yield ctx.commit(timeout=timedelta(seconds=600))
+            task.accept_result(result=our_file)
 
     # By passing `event_consumer=log_summary()` we enable summary logging.
     # See the documentation of the `yapapi.log` module on how to set
@@ -72,7 +48,7 @@ async def main(subnet_tag='devnet-beta.1'):
         num_tasks = 0
         start_time = datetime.now()
 
-        async for task in executor.submit(worker, [Task(data=frame) for frame in frames]):
+        async for task in executor.submit(worker, [Task(data={'some': 'data'})]):
             num_tasks += 1
             print(f"Task computed: {task}, result: {task.result}, time: {task.running_time}")
 
@@ -87,7 +63,7 @@ if __name__ == "__main__":
     enable_default_logger(
         log_file='log.log',
         debug_activity_api=True,
-        debug_market_api=True,
-        debug_payment_api=True,
+        # debug_market_api=True,
+        # debug_payment_api=True,
     )
     sync_main()

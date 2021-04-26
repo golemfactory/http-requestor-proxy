@@ -2,6 +2,48 @@ import requests
 import json
 
 
+class Response():
+    def __init__(self, status, data, headers):
+        self.status = status
+        self.data = data
+        self.headers = headers
+
+    @classmethod
+    def from_file(cls, fname):
+        with open(fname, 'r') as f:
+            return cls.from_json(f.read())
+
+    @classmethod
+    def from_json(cls, json_data):
+        data = json.loads(json_data)
+        return cls(
+            int(data['status']),
+            data['data'].encode('utf-8'),
+            data['headers'],
+        )
+
+    @classmethod
+    def from_requests_response(cls, res: requests.Response):
+        return cls(res.status_code, res.content, dict(res.headers))
+
+    def to_file(self, fname):
+        with open(fname, 'w') as f:
+            f.write(self.as_json())
+
+    def as_json(self):
+        return json.dumps(self.as_dict())
+
+    def as_dict(self):
+        return {
+            'status': self.status,
+            'data': self.data.decode('utf-8'),
+            'headers': self.headers,
+        }
+
+    def as_flask_response(self):
+        return self.data.decode('utf-8'), self.status, self.headers
+
+
 class Request():
     def __init__(self, method, url, data, headers):
         self.method = method

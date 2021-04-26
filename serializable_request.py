@@ -9,6 +9,11 @@ class Request():
         self.data = data
         self.headers = headers
 
+    def replace_mount_url(self, old, new):
+        if not self.url.startswith(old):
+            raise ValueError(f"current url doesn't start with {old}")
+        self.url = self.url.replace(old, new, 1)
+
     @classmethod
     def from_flask_request(cls):
         from flask import request
@@ -34,13 +39,15 @@ class Request():
             f.write(self.as_json())
 
     def as_json(self):
-        data = {
+        return json.dumps(self.as_dict())
+
+    def as_dict(self):
+        return {
             'method': self.method,
             'url': self.url,
             'data': self.data.decode('utf-8'),
             'headers': self.headers,
         }
-        return json.dumps(data)
 
     def as_requests_request(self):
         req = requests.Request(

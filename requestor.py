@@ -13,7 +13,7 @@ from yapapi.package import vm
 
 async def main(subnet_tag='devnet-beta.1'):
     package = await vm.repo(
-        image_hash="5c04bd3ac3a4cc8f94db6192adf28a662bd49512452a571c36e1c405",
+        image_hash="ab2a4af2d7ed13d29f08a7c725a7bff3ec05f82a77e0394f5e91bc55",
         min_mem_gib=0.5,
         min_storage_gib=2.0,
     )
@@ -22,7 +22,7 @@ async def main(subnet_tag='devnet-beta.1'):
         async for task in tasks:
             for i in range(2):
                 their_file, our_file = "/golem/output/ttt.txt", f"output_{i}.txt"
-                ctx.run("/golem/entrypoints/sample_run.py")
+                ctx.run("/golem/entrypoints/sample_request.py")
                 ctx.download_file(their_file, our_file)
                 yield ctx.commit(timeout=timedelta(seconds=1200))
             task.accept_result(result=our_file)

@@ -13,7 +13,7 @@ from yapapi.package import vm
 
 async def main(subnet_tag='devnet-beta.1'):
     package = await vm.repo(
-        image_hash="9fb57c1d1934d841da006aefbca5ee5cc89b8aac4865b3d6a76437d3",
+        image_hash="5c04bd3ac3a4cc8f94db6192adf28a662bd49512452a571c36e1c405",
         min_mem_gib=0.5,
         min_storage_gib=2.0,
     )
@@ -22,14 +22,11 @@ async def main(subnet_tag='devnet-beta.1'):
         async for task in tasks:
             for i in range(2):
                 their_file, our_file = "/golem/output/ttt.txt", f"output_{i}.txt"
-                ctx.run("/golem/entrypoints/run-sample_run.sh")
+                ctx.run("/golem/entrypoints/sample_run.py")
                 ctx.download_file(their_file, our_file)
-                yield ctx.commit(timeout=timedelta(seconds=600))
+                yield ctx.commit(timeout=timedelta(seconds=1200))
             task.accept_result(result=our_file)
 
-    # By passing `event_consumer=log_summary()` we enable summary logging.
-    # See the documentation of the `yapapi.log` module on how to set
-    # the level of detail and format of the logged information.
     async with Executor(
         package=package,
         max_workers=3,

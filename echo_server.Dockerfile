@@ -1,13 +1,10 @@
 #   TODO: change to -slim when development is finished
-# FROM python:3.8
-FROM golemfactory/blender:1.13
+FROM python:3.8
 
 WORKDIR /golem/entrypoints/
 COPY sample_run.py /golem/entrypoints/
-COPY run-sample_run.sh /golem/entrypoints/
 
 RUN chmod +x /golem/entrypoints/sample_run.py
-RUN chmod +x /golem/entrypoints/run-sample_run.sh
 
 VOLUME /golem/work /golem/input /golem/output
 

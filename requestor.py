@@ -13,12 +13,13 @@ from yapapi.package import vm
 
 async def main(subnet_tag='devnet-beta.1'):
     package = await vm.repo(
-        image_hash="ab2a4af2d7ed13d29f08a7c725a7bff3ec05f82a77e0394f5e91bc55",
+        image_hash="86a116d081b8b10ce7f52bd4ac3624efe90124475b5de9864d6def20",
         min_mem_gib=0.5,
         min_storage_gib=2.0,
     )
 
     async def worker(ctx: WorkContext, tasks):
+        ctx.run("/usr/local/bin/gunicorn", "-b", "unix:///tmp/golem.sock", "echo_server:app", "--daemon")
         async for task in tasks:
             for i in range(2):
                 their_file, our_file = "/golem/output/ttt.txt", f"output_{i}.txt"

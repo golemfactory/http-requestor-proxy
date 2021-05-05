@@ -9,24 +9,45 @@ from yapapi import (
 )
 from yapapi.log import enable_default_logger, log_summary, log_event_repr  # noqa
 from yapapi.package import vm
+from os import path
+
+WORK_DIR = '/golem/work'
+
+
+def init_echo_server(ctx):
+    for fname in ('serializable_request.py', 'echo_server.py', 'sample_request.py'):
+        ctx.send_file(fname, path.join(WORK_DIR, fname))
+    ctx.run("/usr/local/bin/gunicorn", "-b", "unix:///tmp/golem.sock", "echo_server:app", "--daemon")
+
+
+def make_request(ctx, request_ix):
+    their_file, our_file = "/golem/output/ttt.txt", f"output_{request_ix}.txt"
+    ctx.run("/usr/local/bin/python", "sample_request.py")
+    ctx.download_file(their_file, our_file)
+    return our_file
 
 
 async def main(subnet_tag='devnet-beta.1'):
     package = await vm.repo(
         image_hash="86a116d081b8b10ce7f52bd4ac3624efe90124475b5de9864d6def20",
+
+        #   This is a new image without python files (that's the direction I wanted to go,
+        #   to speed up the development & also never create images again), but currently
+        #   there's some problem with downloading new images, so I use the old one
+        # image_hash="3159c36d8b6b2836af409afe3a824b907c021a16a8c96f2c1970e032",
         min_mem_gib=0.5,
         min_storage_gib=2.0,
     )
 
     async def worker(ctx: WorkContext, tasks):
-        ctx.run("/usr/local/bin/gunicorn", "-b", "unix:///tmp/golem.sock", "echo_server:app", "--daemon")
+        init_echo_server(ctx)
+        files = []
         async for task in tasks:
             for i in range(2):
-                their_file, our_file = "/golem/output/ttt.txt", f"output_{i}.txt"
-                ctx.run("/golem/entrypoints/sample_request.py")
-                ctx.download_file(their_file, our_file)
+                new_file = make_request(ctx, i)
+                files.append(new_file)
                 yield ctx.commit(timeout=timedelta(seconds=1200))
-            task.accept_result(result=our_file)
+            task.accept_result(result=files)
 
     async with Executor(
         package=package,

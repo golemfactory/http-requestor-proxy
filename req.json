@@ -1,0 +1,1 @@
+{"method": "GET", "url": "http://localhost/", "data": "", "headers": {"User-Agent": "RequestsFlask/0.0.1", "Host": "localhost", "Accept-Encoding": "gzip", "Something-Else": "nope"}}

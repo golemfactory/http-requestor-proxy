@@ -12,19 +12,28 @@ from yapapi.package import vm
 from os import path
 
 WORK_DIR = '/golem/work'
+INPUT_DIR = '/golem/input'
+OUTPUT_DIR = '/golem/output'
 
+PROVIDER_SERVER_URL = 'unix:///tmp/golem.sock'
+PROVIDER_CLIENT_URL = r'http+unix://\%2Ftmp\%2Fgolem.sock/'
 
 def init_echo_server(ctx):
-    for fname in ('serializable_request.py', 'echo_server.py', 'sample_request.py'):
+    for fname in ('serializable_request.py', 'echo_server.py', 'process_request.py', 't1.sh'):
         ctx.send_file(fname, path.join(WORK_DIR, fname))
-    ctx.run("/usr/local/bin/gunicorn", "-b", "unix:///tmp/golem.sock", "echo_server:app", "--daemon")
+    ctx.run("/usr/local/bin/gunicorn", "-b", PROVIDER_SERVER_URL, "echo_server:app", "--daemon")
 
 
 def make_request(ctx, request_ix):
-    their_file, our_file = "/golem/output/ttt.txt", f"output_{request_ix}.txt"
-    ctx.run("/usr/local/bin/python", "sample_request.py")
-    ctx.download_file(their_file, our_file)
-    return our_file
+    #   TODO: unique name
+    our_in = 'req.json'
+    our_out = 'res.json'
+    their_in = path.join(INPUT_DIR, our_in)
+    their_out = path.join(OUTPUT_DIR, our_out)
+    ctx.send_file(our_in, their_in)
+    ctx.run("/bin/sh", "-c", f"/usr/local/bin/python /golem/work/process_request.py --url {PROVIDER_CLIENT_URL} {their_in} {their_out} >> /golem/output/log.txt 2>&1")
+    ctx.download_file(their_out, our_out)
+    return our_out
 
 
 async def main(subnet_tag='devnet-beta.1'):
@@ -43,7 +52,7 @@ async def main(subnet_tag='devnet-beta.1'):
         init_echo_server(ctx)
         files = []
         async for task in tasks:
-            for i in range(2):
+            for i in range(1):
                 new_file = make_request(ctx, i)
                 files.append(new_file)
                 yield ctx.commit(timeout=timedelta(seconds=1200))
@@ -52,7 +61,7 @@ async def main(subnet_tag='devnet-beta.1'):
     async with Executor(
         package=package,
         max_workers=3,
-        budget=10.0,
+        budget=1.0,
         timeout=timedelta(minutes=30),
         subnet_tag=subnet_tag,
         event_consumer=log_summary(log_event_repr),

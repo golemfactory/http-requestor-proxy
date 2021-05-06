@@ -25,7 +25,7 @@ def setup_local_forward():
 
     def local_forward():
         req = Request.from_flask_request()
-        req.replace_mount_url(BASE_URL, echo_url)
+        req.replace_mount_url(echo_url)
         echo_res = Session().send(req.as_requests_request().prepare())
         return echo_res.content, echo_res.status_code, echo_res.headers.items()
     catchall_server.forward_request = local_forward
@@ -42,7 +42,7 @@ def setup_container_forward():
         OUT: file name with serialized response
         '''
         req = Request.from_file(req_fname)
-        req.replace_mount_url(BASE_URL, echo_url)
+        req.replace_mount_url(echo_url)
         requests_res = Session().send(req.as_requests_request().prepare())
         res = Response.from_requests_response(requests_res)
         res.to_file(res_fname)
@@ -51,7 +51,7 @@ def setup_container_forward():
 
 
 @pytest.mark.parametrize('src_req', sample_requests)
-@pytest.mark.parametrize('setup_func', [setup_container_forward])
+@pytest.mark.parametrize('setup_func', [setup_container_forward, setup_local_forward])
 def test_local_echo_server(setup_func, src_req):
     setup_func()
     prepped = src_req.prepare()

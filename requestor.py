@@ -19,7 +19,7 @@ OUTPUT_DIR = '/golem/output'
 PROVIDER_SERVER_URL = 'unix:///tmp/golem.sock'
 
 def init_echo_server(ctx):
-    for fname in ('serializable_request.py', 'echo_server.py', 'process_request.py', 't1.sh'):
+    for fname in ('serializable_request.py', 'echo_server.py', 'process_request.py'):
         ctx.send_file(fname, path.join(WORK_DIR, fname))
     ctx.run("/usr/local/bin/gunicorn", "-b", PROVIDER_SERVER_URL, "echo_server:app", "--daemon")
 

@@ -1,9 +1,16 @@
 # http-requestor-proxy
-
+    
+    #   Golem-free testing
     python3 -m venv .venv
     . .venv/bin/activate
     pip install -r requirements.txt
-    docker build . -f echo_server.Dockerfile -t echo_server
-    docker run -d -p "8001:8001" --name echo_server echo_server
-    ECHO_SERVER_URL="http://localhost:8001/" pytest
-    docker stop echo_server
+    pip install pytest=6.2.3
+    gunicorn -b 0.0.0.0:5000 "echo_server:app" --daemon
+    
+    ECHO_SERVER_URL=http://localhost:5000 pytest
+    pkill gunicorn
+
+    #   Run on provider (assuming yagna requestor is ready)
+    python3 requestor.py
+
+    #   Success: res.json file, with response to req.json

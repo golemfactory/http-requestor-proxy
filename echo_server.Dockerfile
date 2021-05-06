@@ -5,4 +5,4 @@ RUN pip install -r requirements.txt
 
 WORKDIR /golem/work
 
-VOLUME /golem/input /golem/output
+VOLUME /golem/work /golem/input /golem/output

@@ -1,5 +1,6 @@
 import requests
 import json
+from urllib.parse import urlsplit, urlunsplit
 
 
 class Response():
@@ -51,10 +52,18 @@ class Request():
         self.data = data
         self.headers = headers
 
-    def replace_mount_url(self, old, new):
-        if not self.url.startswith(old):
-            raise ValueError(f"current url doesn't start with {old}")
-        self.url = self.url.replace(old, new, 1)
+    def replace_mount_url(self, new_base_url):
+        if '://' not in new_base_url:
+            raise ValueError(f"Missing schema in url {new_base_url}")
+
+        old_url_parts = list(urlsplit(self.url))
+        old_base_url_parts = old_url_parts[:2] + ['', '', '']
+        old_base_url = urlunsplit(old_base_url_parts)
+        
+        if new_base_url.endswith('/'):
+            new_base_url = new_base_url[:-1]
+        
+        self.url = self.url.replace(old_base_url, new_base_url, 1)
 
     @classmethod
     def from_flask_request(cls):

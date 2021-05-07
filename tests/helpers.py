@@ -1,21 +1,43 @@
 from urllib.parse import urlparse
 
-def clean_headers(headers):
+def clean_quart_headers(headers):
     '''
-    1. Remove headers added by Quart.test_client (used only for testing)
-    2. Lowercase http header names, we are case insensitive
+    1. Lowercase http header names, we are case insensitive
+    2. Remove headers added by Quart.test_client (used only for testing)
     '''
-    quart_headers = {
-        'User-Agent': 'Quart',
-        'Remote-Addr': '<local>',
-        'Host': 'localhost',
-    }
     out = dict(headers)
+    out = {key.lower(): val for key, val in out.items()}
+
+    quart_headers = {
+        'user-agent': 'Quart',
+        'remote-addr': '<local>',
+        'host': 'localhost',
+    }
+
     for key, val in quart_headers.items():
         if out.get(key, '') == val:
             del out[key]
 
+    return out
+
+def clean_requests_headers(headers, test_url):
+    '''
+    1. Remove headers added by python.requests
+    2. Lowercase http header names, we are case insensitive
+    '''
+    out = dict(headers)
     out = {key.lower(): val for key, val in out.items()}
+
+    requests_headers = {
+        'accept-encoding': 'identity',
+        'host': urlparse(test_url).netloc,
+        'remote-addr': '127.0.0.1',
+        'user-agent': 'python-urllib3/1.26.4'
+    }
+
+    for key, val in requests_headers.items():
+        if out.get(key, '') == val:
+            del out[key]
 
     return out
 

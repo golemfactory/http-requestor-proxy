@@ -1,5 +1,5 @@
 from .sample_requests import sample_requests, BASE_URL
-from .helpers import clean_headers, clean_body, send_request_to_quart_client
+from .helpers import clean_quart_headers, clean_body, send_request_to_quart_client
 
 import pytest
 
@@ -42,5 +42,5 @@ async def test_local_echo_server(src_req):
 
     assert prepped.method == echo_prepped.method
     assert prepped.url == echo_prepped.url
-    assert clean_headers(prepped.headers) == clean_headers(echo_prepped.headers)
+    assert clean_quart_headers(prepped.headers) == clean_quart_headers(echo_prepped.headers)
     assert clean_body(prepped.body) == clean_body(echo_prepped.body)

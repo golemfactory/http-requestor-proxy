@@ -6,8 +6,10 @@ def clean_headers(headers):
        https://stackoverflow.com/a/18706328
     '''
     out = dict(headers)
-    if out.get('User-Agent', '') == 'RequestsFlask/0.0.1':
+    if out.get('User-Agent', '') == 'Quart':
         del out['User-Agent']
+    if out.get('Remote-Addr', '') == '<local>':
+        del out['Remote-Addr']
     if out.get('Host', '') == 'localhost':
         del out['Host']
 

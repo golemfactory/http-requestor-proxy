@@ -69,6 +69,12 @@ class Request():
     def from_flask_request(cls):
         from flask import request
         return cls(request.method, request.url, request.get_data(), dict(request.headers))
+    
+    @classmethod
+    async def from_quart_request(cls):
+        from quart import request
+        data = await request.get_data()
+        return cls(request.method, request.url, data, dict(request.headers))
 
     @classmethod
     def from_file(cls, fname):

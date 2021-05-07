@@ -1,22 +1,21 @@
+from urllib.parse import urlparse
+
 def clean_headers(headers):
     '''
-    1. Remove headers added by request_flask_adapter (used only for testing)
+    1. Remove headers added by Quart.test_client (used only for testing)
     2. Lowercase http header names, we are case insensitive
-    3. Remove 'accept-encoding': 'identity' header, added by http.client (deep inside requests)
-       https://stackoverflow.com/a/18706328
     '''
+    quart_headers = {
+        'User-Agent': 'Quart',
+        'Remote-Addr': '<local>',
+        'Host': 'localhost',
+    }
     out = dict(headers)
-    if out.get('User-Agent', '') == 'Quart':
-        del out['User-Agent']
-    if out.get('Remote-Addr', '') == '<local>':
-        del out['Remote-Addr']
-    if out.get('Host', '') == 'localhost':
-        del out['Host']
+    for key, val in quart_headers.items():
+        if out.get(key, '') == val:
+            del out[key]
 
     out = {key.lower(): val for key, val in out.items()}
-
-    if out.get('accept-encoding', '') == 'identity':
-        del out['accept-encoding']
 
     return out
 
@@ -30,3 +29,24 @@ def clean_body(body):
     if type(body) is str:
         return body.encode('UTF-8')
     return body
+
+async def send_request_to_quart_client(client, req, prepped_req):
+    '''
+    client      - quart app.test_client()
+    req         - tested request
+    prepped_req - result of req.prepare() - we want to compare exactly the same prepped_req
+                  with the results, and req.prepare().body != req.prepare().body, so
+                  we can't prepare the request here
+    '''
+    path = urlparse(req.url).path
+    headers = dict(prepped_req.headers)
+    
+    async with client.request(path, query_string=req.params, method=req.method, headers=headers) as connection:
+        body = prepped_req.body
+        if body is not None:
+            if type(body) is str:
+                body = body.encode('utf-8')
+            await connection.send(body)
+        await connection.send_complete()
+    response = await connection.as_response()
+    return response

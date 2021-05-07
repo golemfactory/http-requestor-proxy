@@ -16,7 +16,9 @@ def start_server(ctx):
         ctx.send_file(fname, path.join(WORK_DIR, fname))
     ctx.run("/usr/local/bin/gunicorn", "-b", PROVIDER_SERVER_URL, "echo_server:app", "--daemon")
 
-def make_request(ctx, our_in, our_out):
+def make_request(ctx, src_data):
+    our_in, our_out = src_data
+
     random_suffix = uuid4().hex
     their_in = path.join(INPUT_DIR, f"req-{random_suffix}.json")
     their_out = path.join(OUTPUT_DIR, f"res-{random_suffix}.json")
@@ -36,11 +38,11 @@ async def worker(ctx: WorkContext, tasks):
     yield ctx.commit(timeout=timedelta(10))
     start_server_fut.set_result({'status': 'STARTED'})
 
-    # while True:
-    #     src_data, req_fut = await queue.get()
-    #     result = make_request(ctx, src_data)
-    #     yield ctx.commit(timeout=timedelta(10))
-    #     req_fut.set_result(result)
+    while True:
+        src_data, req_fut = await queue.get()
+        make_request(ctx, src_data)
+        yield ctx.commit(timeout=timedelta(10))
+        req_fut.set_result({'status': 'SUCCESS'})
 
     queue.task_done()
     task.accept_result()

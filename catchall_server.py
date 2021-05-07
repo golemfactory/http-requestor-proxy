@@ -1,5 +1,6 @@
 from quart import Quart
 from yagna_connector import YagnaConnector
+from serializable_request import Request
 
 #   TODO: do we want to use hypercorn?
 import hypercorn
@@ -16,7 +17,9 @@ async def start_provider():
     app.yagna = yagna
 
 async def forward_request():
-    raise NotImplementedError
+    req = await Request.from_quart_request()
+    res = await app.yagna.process_request(req)
+    return res.as_flask_response()
 
 @app.route('/', defaults={'path': ''}, methods=HTTP_METHODS)
 @app.route('/<path:path>', methods=HTTP_METHODS)

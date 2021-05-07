@@ -18,8 +18,8 @@ class YagnaConnector():
         enable_default_logger(
             log_file='log.log',
             debug_activity_api=True,
-            debug_market_api=True,
-            debug_payment_api=True,
+            # debug_market_api=True,
+            # debug_payment_api=True,
         )
         asyncio.create_task(self._provider_startup())
 
@@ -30,6 +30,23 @@ class YagnaConnector():
 
         if fut.result() != {'status': 'STARTED'}:
             raise Exception(f'Failed to start provider: {fut.result()}')
+    
+    async def process_request(self, req: Request):
+        with NamedTemporaryFile() as in_file, NamedTemporaryFile() as out_file:
+            req.to_file(in_file.name)
+
+            fut = asyncio.get_running_loop().create_future()
+            data = ((in_file.name, out_file.name), fut)
+            self.queue.put_nowait(data)
+            
+            await fut
+
+            if fut.result() != {'status': 'SUCCESS'}:
+                raise Exception(f'Failed to execute request: {fut.result()}')
+
+            res = Response.from_file(out_file.name)
+
+        return res
 
     async def _provider_startup(self):
         package = await vm.repo(

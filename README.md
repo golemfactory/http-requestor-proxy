@@ -1,18 +1,19 @@
 # http-requestor-proxy
     
-    #   Golem-free testing
+    #   Initialize
     python3 -m venv .venv
     . .venv/bin/activate
     pip install -r requirements.txt
-    pip install pytest==6.2.3
-    gunicorn -b 0.0.0.0:5000 "echo_server:app" --daemon
+    pip install pytest==6.2.3 pytest-asyncio==0.15.1
+
+    #   Golem-free testing (golem-based tests are skipped)
+    pytest
+
+    #   Start golem-based service
+    #   NOTE: it is assumed yagna requestor is initialized and running
+    #   NOTE2: if the first task failed - for any reasony - manual restart is required,
+    #          success is indicated by "[INFO] Application startup complete." message
+    gunicorn catchall_server:app -b localhost:5000 -k uvicorn.workers.UvicornWorker
     
-    ECHO_SERVER_URL=http://localhost:5000 pytest
-    pkill gunicorn
-
-    #   Run on provider (assuming yagna requestor is ready)
-    pip install asgiref==3.3.4
-    pip install yapapi==0.5.3
-    python3 requestor.py
-
-    #   Success: res.json file, with response to req.json
+    #   Tests (~ 55 seconds)
+    CATCHALL_SERVER_URL=http://localhost:5000 pytest tests/test_provider_echo_server.py 

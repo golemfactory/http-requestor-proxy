@@ -43,6 +43,6 @@ async def worker(ctx: WorkContext, tasks):
         make_request(ctx, src_data)
         yield ctx.commit(timeout=timedelta(10))
         req_fut.set_result({'status': 'SUCCESS'})
+        queue.task_done()
 
-    queue.task_done()
     task.accept_result()

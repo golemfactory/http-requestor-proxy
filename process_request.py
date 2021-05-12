@@ -5,12 +5,12 @@ import requests_unixsocket
 
 @click.command()
 @click.option('--url', required=True)
-@click.argument('req_fname')
-@click.argument('res_fname')
-def run(url, req_fname, res_fname):
+@click.argument('request_path')
+@click.argument('response_path')
+def run(url, request_path, response_path):
     url = _adjust_url(url)
 
-    req = Request.from_file(req_fname)
+    req = Request.from_file(request_path)
     req.replace_mount_url(url)
     
     requests_req = req.as_requests_request()
@@ -18,10 +18,10 @@ def run(url, req_fname, res_fname):
     requests_res = session.send(requests_req.prepare())
     
     res = Response.from_requests_response(requests_res)
-    res.to_file(res_fname)
+    res.to_file(response_path)
     
-    print(f"IN:  {req_fname}")
-    print(f"OUT: {res_fname}")
+    print(f"IN:  {request_path}")
+    print(f"OUT: {response_path}")
 
 def _adjust_url(url):
     '''

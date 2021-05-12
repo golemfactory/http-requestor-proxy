@@ -17,16 +17,16 @@ def start_server(ctx):
     ctx.run("/usr/local/bin/gunicorn", "-b", PROVIDER_SERVER_URL, "echo_server:app", "--daemon")
 
 def make_request(ctx, src_data):
-    our_in, our_out = src_data
+    local_in, local_out = src_data
 
     random_suffix = uuid4().hex
-    their_in = path.join(INPUT_DIR, f"req-{random_suffix}.json")
-    their_out = path.join(OUTPUT_DIR, f"res-{random_suffix}.json")
+    remote_in = path.join(INPUT_DIR, f"req-{random_suffix}.json")
+    remote_out = path.join(OUTPUT_DIR, f"res-{random_suffix}.json")
 
-    ctx.send_file(our_in, their_in)
+    ctx.send_file(local_in, remote_in)
     ctx.run('/usr/local/bin/python', '/golem/work/process_request.py',
-            '--url', PROVIDER_SERVER_URL, their_in, their_out)
-    ctx.download_file(their_out, our_out)
+            '--url', PROVIDER_SERVER_URL, remote_in, remote_out)
+    ctx.download_file(remote_out, local_out)
 
 async def worker(ctx: WorkContext, tasks):
     async for task in tasks:

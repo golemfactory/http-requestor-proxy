@@ -10,16 +10,19 @@ HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'T
 
 app = Quart(__name__)
 
+
 @app.before_serving
 async def start_provider():
     yagna = YagnaConnector()
     await yagna.init_provider()
     app.yagna = yagna
 
+
 async def forward_request():
     req = await Request.from_quart_request()
     res = await app.yagna.process_request(req)
     return res.as_flask_response()
+
 
 @app.route('/', defaults={'path': ''}, methods=HTTP_METHODS)
 @app.route('/<path:path>', methods=HTTP_METHODS)

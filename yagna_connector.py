@@ -10,6 +10,7 @@ from yapapi.package import vm
 
 from worker import worker
 
+
 class YagnaConnector():
     def __init__(self):
         self.queue = asyncio.Queue()
@@ -30,7 +31,7 @@ class YagnaConnector():
 
         if fut.result() != {'status': 'STARTED'}:
             raise Exception(f'Failed to start provider: {fut.result()}')
-    
+
     async def process_request(self, req: Request):
         with NamedTemporaryFile() as in_file, NamedTemporaryFile() as out_file:
             req.to_file(in_file.name)
@@ -38,7 +39,7 @@ class YagnaConnector():
             fut = asyncio.get_running_loop().create_future()
             data = ((in_file.name, out_file.name), fut)
             self.queue.put_nowait(data)
-            
+
             await fut
 
             if fut.result() != {'status': 'SUCCESS'}:
@@ -67,7 +68,7 @@ class YagnaConnector():
                 f"payment driver: {executor.driver}, "
                 f"and network: {executor.network}\n"
             )
-            
+
             task = Task(data={'queue': self.queue})
             async for _ in executor.submit(worker, [task]):
                 pass

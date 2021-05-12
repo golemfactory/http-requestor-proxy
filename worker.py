@@ -10,11 +10,12 @@ OUTPUT_DIR = '/golem/output'
 
 PROVIDER_SERVER_URL = 'unix:///tmp/golem.sock'
 
-    
+
 def start_server(ctx):
     for fname in ('serializable_request.py', 'echo_server.py', 'process_request.py'):
         ctx.send_file(fname, path.join(WORK_DIR, fname))
     ctx.run("/usr/local/bin/gunicorn", "-b", PROVIDER_SERVER_URL, "echo_server:app", "--daemon")
+
 
 def make_request(ctx, src_data):
     local_in, local_out = src_data
@@ -28,11 +29,12 @@ def make_request(ctx, src_data):
             '--url', PROVIDER_SERVER_URL, remote_in, remote_out)
     ctx.download_file(remote_out, local_out)
 
+
 async def worker(ctx: WorkContext, tasks):
     async for task in tasks:
         break
     queue = task.data['queue']
-    
+
     start_server_fut = queue.get_nowait()
     start_server(ctx)
     yield ctx.commit(timeout=timedelta(10))

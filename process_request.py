@@ -12,16 +12,17 @@ def run(url, request_path, response_path):
 
     req = Request.from_file(request_path)
     req.replace_mount_url(url)
-    
+
     requests_req = req.as_requests_request()
     session = requests_unixsocket.Session()
     requests_res = session.send(requests_req.prepare())
-    
+
     res = Response.from_requests_response(requests_res)
     res.to_file(response_path)
-    
+
     print(f"IN:  {request_path}")
     print(f"OUT: {response_path}")
+
 
 def _adjust_url(url):
     '''
@@ -48,7 +49,7 @@ def _adjust_url(url):
         #   Also we can't use ullib.parse.quote, because some part might
         #   already be url-encoded.
         no_schema_url = no_schema_url.replace('/', '%2F')
-    
+
     return '://'.join([schema, no_schema_url])
 
 

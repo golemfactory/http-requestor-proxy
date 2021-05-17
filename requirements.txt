@@ -1,6 +1,17 @@
+#   NOTE: this is a mess, because some things are required on provider, some
+#         things are required on requestor and things "really required on provider"
+#         are different from those required for echo-server-based tests.
+#         I don't fix it now because this will change either way when we have a final interface.
 Flask==1.1.2
+Quart==0.14.1
 requests==2.25.1
-pytest==6.2.3
 requests_flask_adapter==0.1.0
 gunicorn==20.1.0
 requests-unixsocket==0.2.0
+
+#   Quart + gunicorn = uvicorn
+uvloop==0.15.2
+uvicorn==0.13.4
+httptools==0.2.0
+
+yapapi==0.5.3
